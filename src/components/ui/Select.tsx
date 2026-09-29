@@ -27,11 +27,14 @@ interface SelectProps<T extends string | number> {
   searchable?: boolean;
   disabled?: boolean;
   className?: string;
+  size?: 'md' | 'sm';
   'aria-label'?: string;
 }
 
 const fieldClass =
-  'w-full rounded-lg border border-line bg-surface py-2.5 text-heading outline-none placeholder:text-muted data-disabled:cursor-not-allowed data-disabled:opacity-50';
+  'w-full rounded-lg border border-line bg-surface text-heading outline-none placeholder:text-muted data-disabled:cursor-not-allowed data-disabled:opacity-50';
+
+const sizeClass = { md: 'py-2.5', sm: 'py-1.5 text-sm' };
 
 const focusClass =
   'data-focus:border-neon data-focus:shadow-[0_0_0_3px_var(--color-neon-dim)] data-open:border-neon';
@@ -61,6 +64,7 @@ export default function Select<T extends string | number>({
   searchable = false,
   disabled = false,
   className,
+  size = 'md',
   'aria-label': ariaLabel,
 }: SelectProps<T>) {
   const [query, setQuery] = useState('');
@@ -87,7 +91,7 @@ export default function Select<T extends string | number>({
           immediate
         >
           <ComboboxInput
-            className={cn(fieldClass, focusClass, 'pl-3.5 pr-10')}
+            className={cn(fieldClass, sizeClass[size], focusClass, 'pl-3.5 pr-10')}
             displayValue={(current: T) =>
               options.find((option) => option.value === current)?.label ?? ''
             }
@@ -127,6 +131,7 @@ export default function Select<T extends string | number>({
         <ListboxButton
           className={cn(
             fieldClass,
+            sizeClass[size],
             focusClass,
             'group flex cursor-pointer items-center justify-between gap-2 px-3.5 text-left',
           )}
@@ -137,7 +142,7 @@ export default function Select<T extends string | number>({
           </span>
           <ChevronDown className={chevronClass} />
         </ListboxButton>
-        <ListboxOptions anchor="bottom start" transition className={cn(panelClass, 'w-(--button-width)')}>
+        <ListboxOptions anchor="bottom start" transition className={cn(panelClass, 'min-w-(--button-width)')}>
           {options.map((option) => (
             <ListboxOption key={option.value} value={option.value} className={optionClass}>
               <OptionContent label={option.label} />

@@ -1,8 +1,13 @@
-function parseDateOnly(value: string | null | undefined): Date | null {
+export function parseDateOnly(value: string | null | undefined): Date | null {
   if (!value) return null;
   const [year, month, day] = value.slice(0, 10).split('-').map(Number);
   if (!year || !month || !day) return null;
   return new Date(year, month - 1, day);
+}
+
+export function toDateOnly(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 export function formatDate(value: string | null | undefined): string {

@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Save, SquarePlus, Trash, X } from 'lucide-react';
 import { btnDanger, btnDangerSolid, btnPrimary, btnSecondary, iconClass, inputClass, labelClass } from '../ui/formStyles';
+import DatePicker from '../ui/DatePicker';
 import Select, { type SelectOption } from '../ui/Select';
 import { emptyToNull, parseOptionalNumber, toDateInput } from '../../lib/format';
 import type {
@@ -182,14 +183,18 @@ export default function RutinaForm({
             <span className={labelClass}>Nombre de la rutina</span>
             <input className={inputClass} value={nombre} onChange={(e) => setNombre(e.target.value)} />
           </label>
-          <label>
-            <span className={labelClass}>Fecha de inicio</span>
-            <input className={inputClass} type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
-          </label>
-          <label>
-            <span className={labelClass}>Fecha de fin</span>
-            <input className={inputClass} type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
-          </label>
+          <DatePicker
+            label="Fecha de inicio"
+            value={fechaInicio}
+            onChange={setFechaInicio}
+            max={fechaFin || undefined}
+          />
+          <DatePicker
+            label="Fecha de fin"
+            value={fechaFin}
+            onChange={setFechaFin}
+            min={fechaInicio || undefined}
+          />
         </div>
       </div>
       <div>

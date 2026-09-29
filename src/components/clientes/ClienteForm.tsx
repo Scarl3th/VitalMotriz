@@ -2,7 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
 import { btnPrimary, btnSecondary, iconClass, inputClass, labelClass } from '../ui/formStyles';
-import { emptyToNull, toDateInput } from '../../lib/format';
+import DatePicker from '../ui/DatePicker';
+import { emptyToNull, toDateInput, toDateOnly } from '../../lib/format';
 import type { Cliente } from '../../types';
 
 interface ClienteFormProps {
@@ -68,15 +69,15 @@ export default function ClienteForm({ cliente, cancelTo, onSubmit }: ClienteForm
           <span className={labelClass}>Teléfono</span>
           <input className={inputClass} value={telefono} onChange={(e) => setTelefono(e.target.value)} />
         </label>
-        <label className="sm:col-span-2">
-          <span className={labelClass}>Fecha de nacimiento</span>
-          <input
-            className={inputClass}
-            type="date"
-            value={fechaNacimiento}
-            onChange={(e) => setFechaNacimiento(e.target.value)}
-          />
-        </label>
+        <DatePicker
+          className="sm:col-span-2"
+          label="Fecha de nacimiento"
+          value={fechaNacimiento}
+          onChange={setFechaNacimiento}
+          max={toDateOnly(new Date())}
+          fromYear={new Date().getFullYear() - 100}
+          toYear={new Date().getFullYear()}
+        />
       </div>
 
       {error && <p className="mt-4 text-sm text-danger">{error}</p>}
