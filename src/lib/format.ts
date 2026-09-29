@@ -1,5 +1,3 @@
-import type { EstadoRutina } from '../types';
-
 function parseDateOnly(value: string | null | undefined): Date | null {
   if (!value) return null;
   const [year, month, day] = value.slice(0, 10).split('-').map(Number);
@@ -11,16 +9,6 @@ export function formatDate(value: string | null | undefined): string {
   const date = parseDateOnly(value);
   if (!date) return value || '—';
   return date.toLocaleDateString('es-CL');
-}
-
-export function formatDateLong(value: string | null | undefined): string {
-  const date = parseDateOnly(value);
-  if (!date) return value || '—';
-  return date.toLocaleDateString('es-CL', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
 }
 
 export function ageFromBirthdate(value: string | null | undefined): number | null {
@@ -37,15 +25,12 @@ export function ageFromBirthdate(value: string | null | undefined): number | nul
   return age;
 }
 
-export function formatNumber(value: number | null | undefined): string {
-  if (value === null || value === undefined) return '—';
-  return String(value);
-}
-
-export function formatEstado(estado: EstadoRutina): string {
-  if (estado === 'activa') return 'Activa';
-  if (estado === 'completada') return 'Completada';
-  return 'Inactiva';
+export function normalizeText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 }
 
 export function clienteNombreCompleto(nombre: string, apellido: string | null): string {

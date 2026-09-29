@@ -1,33 +1,25 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getCliente, deleteCliente } from '../../api/clientes';
-import { listEvaluaciones } from '../../api/evaluaciones';
 import { getErrorMessage } from '../../api/errors';
-import { getRutinaActiva, listRutinas } from '../../api/rutinas';
-import EvaluacionesList from '../../components/evaluaciones/EvaluacionesList';
+import { deleteRutina, getRutinaCliente } from '../../api/rutinas';
 import RutinaView from '../../components/rutinas/RutinaView';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import LoadingState from '../../components/ui/LoadingState';
-import { cn } from '../../lib/cn';
-import { ageFromBirthdate, clienteNombreCompleto, formatDate, formatEstado } from '../../lib/format';
-import { btnDanger, btnSecondary } from '../../components/ui/formStyles';
-import type { Cliente, EvaluacionFisica, Rutina, RutinaResumen } from '../../types';
-
-type Tab = 'rutina' | 'evaluaciones';
+import { ageFromBirthdate, clienteNombreCompleto } from '../../lib/format';
+import { SquarePen, SquarePlus, Trash } from 'lucide-react';
+import { btnDanger, btnSecondary, iconClass } from '../../components/ui/formStyles';
+import type { Cliente, Rutina } from '../../types';
 
 export default function ClientePage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const idCliente = Number(id);
   const idValido = Number.isInteger(idCliente) && idCliente > 0;
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tab: Tab = searchParams.get('tab') === 'evaluaciones' ? 'evaluaciones' : 'rutina';
 
   const [cliente, setCliente] = useState<Cliente | null>(null);
-  const [rutinaActiva, setRutinaActiva] = useState<Rutina | null>(null);
-  const [rutinas, setRutinas] = useState<RutinaResumen[]>([]);
-  const [evaluaciones, setEvaluaciones] = useState<EvaluacionFisica[]>([]);
+  const [rutina, setRutina] = useState<Rutina | null>(null);
   const [cargando, setCargando] = useState(idValido);
   const [error, setError] = useState<string | null>(idValido ? null : 'Cliente inválido.');
 
@@ -41,18 +33,14 @@ export default function ClientePage() {
         setCargando(true);
         setError(null);
 
-        const [clienteData, rutinaData, rutinasData, evaluacionesData] = await Promise.all([
+        const [clienteData, rutinaData] = await Promise.all([
           getCliente(idCliente),
-          getRutinaActiva(idCliente),
-          listRutinas(idCliente),
-          listEvaluaciones(idCliente),
+          getRutinaCliente(idCliente),
         ]);
 
         if (cancelled) return;
         setCliente(clienteData);
-        setRutinaActiva(rutinaData);
-        setRutinas(rutinasData);
-        setEvaluaciones(evaluacionesData);
+        setRutina(rutinaData);
       } catch (err) {
         if (!cancelled) setError(getErrorMessage(err));
       } finally {
@@ -65,19 +53,6 @@ export default function ClientePage() {
       cancelled = true;
     };
   }, [idCliente, idValido]);
-
-  const otrasRutinas = useMemo(
-    () => rutinas.filter((rutina) => rutina.id_rutina !== rutinaActiva?.id_rutina),
-    [rutinas, rutinaActiva],
-  );
-
-  const setTab = (next: Tab) => {
-    if (next === 'evaluaciones') {
-      setSearchParams({ tab: 'evaluaciones' });
-      return;
-    }
-    setSearchParams({});
-  };
 
   if (cargando) return <LoadingState message="Cargando ficha del cliente..." />;
   if (error) return <ErrorState message={error} />;
@@ -108,7 +83,7 @@ export default function ClientePage() {
         </h1>
         <div className="flex flex-wrap items-center gap-3 sm:ml-auto sm:justify-end">
           <div className="flex min-w-[120px] flex-col gap-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-neon">
+            <span className="font-display text-[13px] font-bold uppercase tracking-wider text-neon">
               Teléfono
             </span>
             <span className="text-[15px] font-semibold text-heading">
@@ -116,13 +91,13 @@ export default function ClientePage() {
             </span>
           </div>
           <div className="flex min-w-[120px] flex-col gap-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-neon">Edad</span>
+            <span className="font-display text-[13px] font-bold uppercase tracking-wider text-neon">Edad</span>
             <span className="text-[15px] font-semibold text-heading">
               {edad !== null ? `${edad} años` : '—'}
             </span>
           </div>
           <Link className={btnSecondary} to={`/clientes/${cliente.id_cliente}/editar`}>
-            Editar
+            <SquarePen className={iconClass} />
           </Link>
           <button
             className={btnDanger}
@@ -130,7 +105,7 @@ export default function ClientePage() {
             onClick={() => {
               if (
                 !window.confirm(
-                  `¿Eliminar a ${clienteNombreCompleto(cliente.nombre, cliente.apellido)}? Se borrarán también sus rutinas y evaluaciones.`,
+                  `¿Eliminar a ${clienteNombreCompleto(cliente.nombre, cliente.apellido)}? Se borrará también su rutina.`,
                 )
               ) {
                 return;
@@ -140,135 +115,64 @@ export default function ClientePage() {
                 .catch((err) => window.alert(getErrorMessage(err)));
             }}
           >
-            Eliminar
+            <Trash className={iconClass} />
           </button>
         </div>
       </header>
 
-      <div className="mb-6 flex gap-2 border-b border-line">
-        <button
-          type="button"
-          className={cn(
-            '-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-3.5 py-2.5',
-            tab === 'rutina'
-              ? 'border-neon font-bold text-neon'
-              : 'border-transparent text-muted hover:text-heading',
-          )}
-          onClick={() => setTab('rutina')}
-        >
-          Rutina
-        </button>
-        <button
-          type="button"
-          className={cn(
-            '-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-3.5 py-2.5',
-            tab === 'evaluaciones'
-              ? 'border-neon font-bold text-neon'
-              : 'border-transparent text-muted hover:text-heading',
-          )}
-          onClick={() => setTab('evaluaciones')}
-        >
-          Evaluaciones
-        </button>
-      </div>
-
-      {tab === 'rutina' && (
-        <>
-          {rutinaActiva ? (
+      {rutina ? (
+        <RutinaView
+          rutina={rutina}
+          actions={
             <>
-              <div className="mb-4 flex flex-wrap justify-end gap-2">
-                <Link
-                  className={btnSecondary}
-                  to={`/clientes/${cliente.id_cliente}/rutinas/${rutinaActiva.id_rutina}/editar`}
-                >
-                  Editar rutina
-                </Link>
-                <Link className={btnSecondary} to={`/clientes/${cliente.id_cliente}/rutinas/nueva`}>
-                  Nueva rutina
-                </Link>
-              </div>
-              <RutinaView rutina={rutinaActiva} />
-            </>
-          ) : (
-            <EmptyState
-              title="Sin rutina activa"
-              message="Este cliente no tiene una rutina activa en este momento."
-            />
-          )}
-
-          {!rutinaActiva && (
-            <div className="mt-4">
-              <Link className={btnSecondary} to={`/clientes/${cliente.id_cliente}/rutinas/nueva`}>
+              <Link className={btnSecondary} to={`/clientes/${cliente.id_cliente}/rutina/editar`}>
+                <SquarePen className={iconClass} />
+                Editar rutina
+              </Link>
+              <Link
+                className={btnSecondary}
+                to={`/clientes/${cliente.id_cliente}/rutina/nueva`}
+                onClick={(event) => {
+                  if (
+                    !window.confirm(
+                      `Se eliminará la rutina actual ("${rutina.nombre_rutina || 'Rutina sin nombre'}") y será reemplazada por la nueva. ¿Quieres continuar?`,
+                    )
+                  ) {
+                    event.preventDefault();
+                  }
+                }}
+              >
+                <SquarePlus className={iconClass} />
                 Nueva rutina
               </Link>
-            </div>
-          )}
-
-          {otrasRutinas.length > 0 && (
-            <>
-              <h2 className="mb-3 mt-7 text-base font-bold text-heading">Otras rutinas</h2>
-              <div className="overflow-x-auto rounded-[10px] border border-line bg-surface">
-                <table className="w-full min-w-[36rem] text-left">
-                  <thead>
-                    <tr>
-                      <th className="border-b border-line px-3.5 py-2.5 text-[11px] uppercase tracking-wider text-muted">
-                        Nombre
-                      </th>
-                      <th className="border-b border-line px-3.5 py-2.5 text-[11px] uppercase tracking-wider text-muted">
-                        Estado
-                      </th>
-                      <th className="border-b border-line px-3.5 py-2.5 text-[11px] uppercase tracking-wider text-muted">
-                        Inicio
-                      </th>
-                      <th className="border-b border-line px-3.5 py-2.5 text-[11px] uppercase tracking-wider text-muted">
-                        Fin
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {otrasRutinas.map((rutina) => (
-                      <tr
-                        key={rutina.id_rutina}
-                        className="cursor-pointer hover:bg-surface-hover"
-                        onClick={() =>
-                          navigate(`/clientes/${cliente.id_cliente}/rutinas/${rutina.id_rutina}`)
-                        }
-                      >
-                        <td className="border-b border-line px-3.5 py-3 font-semibold text-neon">
-                          {rutina.nombre_rutina || 'Rutina sin nombre'}
-                        </td>
-                        <td className="border-b border-line px-3.5 py-3">{formatEstado(rutina.estado)}</td>
-                        <td className="border-b border-line px-3.5 py-3">
-                          {formatDate(rutina.fecha_inicio)}
-                        </td>
-                        <td className="border-b border-line px-3.5 py-3">
-                          {formatDate(rutina.fecha_fin)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <button
+                className={btnDanger}
+                type="button"
+                onClick={() => {
+                  if (!window.confirm('¿Eliminar la rutina de este cliente?')) return;
+                  void deleteRutina(rutina.id_rutina)
+                    .then(() => setRutina(null))
+                    .catch((err) => window.alert(getErrorMessage(err)));
+                }}
+              >
+                <Trash className={iconClass} />
+                Eliminar
+              </button>
             </>
-          )}
-        </>
-      )}
-
-      {tab === 'evaluaciones' && (
+          }
+        />
+      ) : (
         <>
-          <div className="mb-4 flex justify-end">
-            <Link className={btnSecondary} to={`/clientes/${cliente.id_cliente}/evaluaciones/nueva`}>
-              Nueva evaluación
+          <EmptyState
+            title="Sin rutina"
+            message="Este cliente todavía no tiene una rutina asignada."
+          />
+          <div className="mt-4">
+            <Link className={btnSecondary} to={`/clientes/${cliente.id_cliente}/rutina/nueva`}>
+              <SquarePlus className={iconClass} />
+              Nueva rutina
             </Link>
           </div>
-          {evaluaciones.length > 0 ? (
-            <EvaluacionesList idCliente={cliente.id_cliente} evaluaciones={evaluaciones} />
-          ) : (
-            <EmptyState
-              title="Sin evaluaciones"
-              message="Este cliente todavía no tiene evaluaciones físicas."
-            />
-          )}
         </>
       )}
     </section>

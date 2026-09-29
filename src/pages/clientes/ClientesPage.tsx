@@ -7,7 +7,8 @@ import ClienteSearch from '../../components/clientes/ClienteSearch';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import LoadingState from '../../components/ui/LoadingState';
-import { btnPrimary } from '../../components/ui/formStyles';
+import { UserRoundPlus } from 'lucide-react';
+import { btnPrimary, iconClass } from '../../components/ui/formStyles';
 import { useDebouncedValue } from '../../lib/useDebouncedValue';
 import type { Cliente } from '../../types';
 
@@ -47,6 +48,7 @@ export default function ClientesPage() {
         <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center md:w-auto md:flex-1 md:justify-end">
           <ClienteSearch value={query} onChange={setQuery} />
           <Link className={`${btnPrimary} w-full whitespace-nowrap px-6 sm:w-auto`} to="/clientes/nuevo">
+            <UserRoundPlus className={iconClass} />
             Nuevo cliente
           </Link>
         </div>

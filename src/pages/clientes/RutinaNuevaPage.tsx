@@ -74,8 +74,8 @@ export default function RutinaNuevaPage() {
         ejerciciosCatalogo={ejercicios}
         cancelTo={`/clientes/${cliente.id_cliente}`}
         onSubmit={async (draft) => {
-          const idRutina = await saveRutina(null, draft);
-          navigate(`/clientes/${cliente.id_cliente}/rutinas/${idRutina}`);
+          await saveRutina(null, draft);
+          navigate(`/clientes/${cliente.id_cliente}`);
         }}
       />
     </section>

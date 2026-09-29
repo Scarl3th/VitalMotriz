@@ -3,11 +3,9 @@ import type {
   DiaRutina,
   Ejercicio,
   EjercicioRutina,
-  EstadoRutina,
   GrupoMuscular,
   Rutina,
   RutinaDraft,
-  RutinaResumen,
   TipoSeccion,
 } from '../types';
 
@@ -17,7 +15,6 @@ const RUTINA_SELECT = `
   nombre_rutina,
   fecha_inicio,
   fecha_fin,
-  estado,
   dias_rutina (
     id_dia_rutina,
     nombre_dia,
@@ -87,7 +84,6 @@ interface RutinaRow {
   nombre_rutina: string | null;
   fecha_inicio: string | null;
   fecha_fin: string | null;
-  estado: EstadoRutina;
   dias_rutina: DiaRutinaRow[] | null;
 }
 
@@ -148,27 +144,15 @@ function mapRutina(row: RutinaRow): Rutina {
     nombre_rutina: row.nombre_rutina,
     fecha_inicio: row.fecha_inicio,
     fecha_fin: row.fecha_fin,
-    estado: row.estado,
     dias_rutina: dias,
   };
 }
 
-export async function listRutinas(idCliente: number): Promise<RutinaResumen[]> {
-  const { data, error } = await supabase
-    .from('rutinas')
-    .select('id_rutina, id_cliente, nombre_rutina, fecha_inicio, fecha_fin, estado')
-    .eq('id_cliente', idCliente)
-    .order('fecha_inicio', { ascending: false, nullsFirst: false });
-
-  if (error) throw error;
-  return (data ?? []) as RutinaResumen[];
-}
-
-export async function getRutina(id: number): Promise<Rutina | null> {
+export async function getRutinaCliente(idCliente: number): Promise<Rutina | null> {
   const { data, error } = await supabase
     .from('rutinas')
     .select(RUTINA_SELECT)
-    .eq('id_rutina', id)
+    .eq('id_cliente', idCliente)
     .maybeSingle();
 
   if (error) throw error;
@@ -176,43 +160,12 @@ export async function getRutina(id: number): Promise<Rutina | null> {
   return mapRutina(data as unknown as RutinaRow);
 }
 
-export async function getRutinaActiva(idCliente: number): Promise<Rutina | null> {
-  const { data, error } = await supabase
-    .from('rutinas')
-    .select('id_rutina')
-    .eq('id_cliente', idCliente)
-    .eq('estado', 'activa')
-    .order('fecha_inicio', { ascending: false, nullsFirst: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) return null;
-  return getRutina(data.id_rutina);
-}
-
 export async function saveRutina(idRutina: number | null, draft: RutinaDraft): Promise<number> {
-  if (draft.estado === 'activa') {
-    let request = supabase
-      .from('rutinas')
-      .update({ estado: 'inactiva' })
-      .eq('id_cliente', draft.id_cliente)
-      .eq('estado', 'activa');
-
-    if (idRutina) {
-      request = request.neq('id_rutina', idRutina);
-    }
-
-    const { error: deactivateError } = await request;
-    if (deactivateError) throw deactivateError;
-  }
-
   const payload = {
     id_cliente: draft.id_cliente,
     nombre_rutina: draft.nombre_rutina,
     fecha_inicio: draft.fecha_inicio,
     fecha_fin: draft.fecha_fin,
-    estado: draft.estado,
   };
 
   let rutinaId = idRutina;
@@ -227,6 +180,12 @@ export async function saveRutina(idRutina: number | null, draft: RutinaDraft): P
       .eq('id_rutina', rutinaId);
     if (deleteDaysError) throw deleteDaysError;
   } else {
+    const { error: deleteError } = await supabase
+      .from('rutinas')
+      .delete()
+      .eq('id_cliente', draft.id_cliente);
+    if (deleteError) throw deleteError;
+
     const { data, error } = await supabase
       .from('rutinas')
       .insert(payload)

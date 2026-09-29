@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { btnPrimary, btnSecondary, inputClass, labelClass } from '../ui/formStyles';
+import { Save, X } from 'lucide-react';
+import { btnPrimary, btnSecondary, iconClass, inputClass, labelClass } from '../ui/formStyles';
 import { emptyToNull, toDateInput } from '../../lib/format';
 import type { Cliente } from '../../types';
 
@@ -82,9 +83,11 @@ export default function ClienteForm({ cliente, cancelTo, onSubmit }: ClienteForm
 
       <div className="mt-6 flex flex-wrap gap-3">
         <button className={btnPrimary} type="submit" disabled={guardando}>
+          <Save className={iconClass} />
           {guardando ? 'Guardando...' : 'Guardar'}
         </button>
         <Link className={btnSecondary} to={cancelTo}>
+          <X className={iconClass} />
           Cancelar
         </Link>
       </div>

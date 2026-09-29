@@ -1,29 +1,32 @@
+import type { ReactNode } from 'react';
 import { grupoMuscularTone } from '../../lib/grupoMuscularColor';
 import { cn } from '../../lib/cn';
-import { formatDate, formatEstado } from '../../lib/format';
-import type { EstadoRutina, Rutina } from '../../types';
+import { formatDate } from '../../lib/format';
+import type { Rutina } from '../../types';
 
 interface RutinaViewProps {
   rutina: Rutina;
+  actions?: ReactNode;
 }
 
-function badgeClass(estado: EstadoRutina): string {
-  const base =
-    'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider';
-  if (estado === 'activa') return cn(base, 'border-neon-border bg-neon-dim text-neon');
-  if (estado === 'completada') return cn(base, 'border-warn-border bg-warn-dim text-warn');
-  return cn(base, 'border-line bg-surface-hover text-muted');
-}
+const edgeCell = 'px-3 first:pl-4 last:pr-4 sm:first:pl-6 sm:last:pr-6';
+const thClass = cn(
+  edgeCell,
+  'border-b border-line py-2.5 text-[13px] font-bold uppercase tracking-wider text-muted',
+);
+const tdClass = cn(edgeCell, 'border-b border-surface-hover py-3 align-top tabular-nums');
 
-export default function RutinaView({ rutina }: RutinaViewProps) {
+export default function RutinaView({ rutina, actions }: RutinaViewProps) {
   return (
     <article>
       <header className="mb-6">
-        <h2 className="text-2xl font-extrabold text-heading">
-          {rutina.nombre_rutina || 'Rutina sin nombre'}
-        </h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="min-w-0 text-2xl font-extrabold break-words text-heading">
+            {rutina.nombre_rutina || 'Rutina sin nombre'}
+          </h2>
+          {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
+        </div>
         <div className="mt-2 flex flex-wrap gap-x-5 gap-y-3 text-sm text-muted">
-          <span className={badgeClass(rutina.estado)}>{formatEstado(rutina.estado)}</span>
           <span>Inicio: {formatDate(rutina.fecha_inicio)}</span>
           <span>Fin: {formatDate(rutina.fecha_fin)}</span>
         </div>
@@ -62,34 +65,22 @@ export default function RutinaView({ rutina }: RutinaViewProps) {
                 )}
               </div>
 
-              <div className="overflow-x-auto px-4 sm:px-6">
+              <div className="overflow-x-auto">
               <table className="w-full min-w-[40rem] border-collapse text-left">
                 <thead>
                   <tr>
-                    <th className="border-b border-line px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-muted">
-                      Sección
-                    </th>
-                    <th className="border-b border-line px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-muted">
-                      Ejercicio
-                    </th>
-                    <th className="border-b border-line px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-muted">
-                      Series
-                    </th>
-                    <th className="border-b border-line px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-muted">
-                      Repeticiones
-                    </th>
-                    <th className="border-b border-line px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-muted">
-                      Duración
-                    </th>
-                    <th className="border-b border-line px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-muted">
-                      Intensidad
-                    </th>
+                    <th className={thClass}>Sección</th>
+                    <th className={thClass}>Ejercicio</th>
+                    <th className={thClass}>Series</th>
+                    <th className={thClass}>Repeticiones</th>
+                    <th className={thClass}>Duración</th>
+                    <th className={thClass}>Intensidad</th>
                   </tr>
                 </thead>
                 <tbody>
                   {dia.ejercicios_rutina.map((ejercicio) => (
-                    <tr key={ejercicio.id_detalle}>
-                      <td className="border-b border-surface-hover px-3 py-3 align-top text-ink">
+                    <tr key={ejercicio.id_detalle} className="last:*:border-b-0">
+                      <td className={cn(tdClass, 'text-ink')}>
                         <span
                           className={cn(
                             'inline-block rounded px-1.5 py-0.5 text-[10px] font-extrabold tracking-wider',
@@ -103,21 +94,21 @@ export default function RutinaView({ rutina }: RutinaViewProps) {
                             : 'Principal'}
                         </span>
                       </td>
-                      <td className="border-b border-surface-hover px-3 py-3 align-top font-semibold text-heading">
+                      <td className={cn(tdClass, 'font-semibold text-heading')}>
                         {ejercicio.ejercicios?.nombre_ejercicio || 'Ejercicio'}
                       </td>
-                      <td className="border-b border-surface-hover px-3 py-3 align-top font-bold text-neon">
+                      <td className={cn(tdClass, 'font-bold text-neon')}>
                         {ejercicio.series ?? '—'}
                       </td>
-                      <td className="border-b border-surface-hover px-3 py-3 align-top text-ink">
+                      <td className={cn(tdClass, 'text-ink')}>
                         {ejercicio.repeticiones ?? '—'}
                       </td>
-                      <td className="border-b border-surface-hover px-3 py-3 align-top text-ink">
+                      <td className={cn(tdClass, 'text-ink')}>
                         {ejercicio.duracion_segundos != null
                           ? `${ejercicio.duracion_segundos} seg`
                           : '—'}
                       </td>
-                      <td className="border-b border-surface-hover px-3 py-3 align-top font-bold text-neon">
+                      <td className={cn(tdClass, 'font-bold text-neon')}>
                         {ejercicio.porcentaje_intensidad != null
                           ? `${ejercicio.porcentaje_intensidad}%`
                           : '—'}

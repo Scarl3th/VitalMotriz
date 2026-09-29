@@ -1,10 +1,11 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { btnDanger, btnPrimary, btnSecondary, inputClass, labelClass } from '../ui/formStyles';
+import { Save, SquarePlus, Trash, X } from 'lucide-react';
+import { btnDanger, btnDangerSolid, btnPrimary, btnSecondary, iconClass, inputClass, labelClass } from '../ui/formStyles';
+import Select, { type SelectOption } from '../ui/Select';
 import { emptyToNull, parseOptionalNumber, toDateInput } from '../../lib/format';
 import type {
   EjercicioCatalogo,
-  EstadoRutina,
   GrupoMuscular,
   Rutina,
   RutinaDraft,
@@ -37,6 +38,11 @@ interface RutinaFormProps {
   cancelTo: string;
   onSubmit: (draft: RutinaDraft) => Promise<void>;
 }
+
+const opcionesSeccion: SelectOption<TipoSeccion>[] = [
+  { value: 'calentamiento', label: 'Calentamiento' },
+  { value: 'principal', label: 'Principal' },
+];
 
 function newKey(): string {
   return crypto.randomUUID();
@@ -75,7 +81,6 @@ export default function RutinaForm({
   const [nombre, setNombre] = useState(rutina?.nombre_rutina ?? '');
   const [fechaInicio, setFechaInicio] = useState(toDateInput(rutina?.fecha_inicio));
   const [fechaFin, setFechaFin] = useState(toDateInput(rutina?.fecha_fin));
-  const [estado, setEstado] = useState<EstadoRutina>(rutina?.estado ?? 'activa');
   const [dias, setDias] = useState<DiaLocal[]>(() => {
     if (!rutina?.dias_rutina.length) return [emptyDia(1)];
     return rutina.dias_rutina.map((dia) => ({
@@ -101,6 +106,11 @@ export default function RutinaForm({
   const primerEjercicioId = ejerciciosCatalogo[0]?.id_ejercicio ?? 0;
   const catalogoPorId = useMemo(
     () => new Map(ejerciciosCatalogo.map((item) => [item.id_ejercicio, item])),
+    [ejerciciosCatalogo],
+  );
+  const opcionesEjercicios = useMemo<SelectOption<number>[]>(
+    () =>
+      ejerciciosCatalogo.map((item) => ({ value: item.id_ejercicio, label: item.nombre_ejercicio })),
     [ejerciciosCatalogo],
   );
 
@@ -142,7 +152,6 @@ export default function RutinaForm({
         nombre_rutina: emptyToNull(nombre),
         fecha_inicio: emptyToNull(fechaInicio),
         fecha_fin: emptyToNull(fechaFin),
-        estado,
         dias: dias.map((dia, index) => ({
           nombre_dia: dia.nombre_dia.trim(),
           orden_dia: index + 1,
@@ -181,31 +190,29 @@ export default function RutinaForm({
             <span className={labelClass}>Fecha de fin</span>
             <input className={inputClass} type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
           </label>
-          <label>
-            <span className={labelClass}>Estado</span>
-            <select className={inputClass} value={estado} onChange={(e) => setEstado(e.target.value as EstadoRutina)}>
-              <option value="activa">Activa</option>
-              <option value="inactiva">Inactiva</option>
-              <option value="completada">Completada</option>
-            </select>
-          </label>
         </div>
       </div>
-
+      <div>
+        <span className="min-w-0 font-display text-2xl font-extrabold break-words text-heading">Días</span>
+      </div>
       {dias.map((dia) => (
         <section key={dia.key} className="overflow-hidden rounded-[10px] border border-line bg-surface">
-          <div className="flex flex-col gap-3 border-b border-line bg-notes px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <input
-              className={`${inputClass} w-full sm:max-w-sm`}
-              value={dia.nombre_dia}
-              onChange={(e) => updateDia(dia.key, { nombre_dia: e.target.value })}
-            />
+          <div className="flex flex-col gap-3 border-b border-line bg-surface-hover px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <label className="flex w-full items-center gap-3 sm:max-w-md">
+              <span className={`${labelClass} mb-0! shrink-0`}>Título</span>
+              <input
+                className={inputClass}
+                value={dia.nombre_dia}
+                onChange={(e) => updateDia(dia.key, { nombre_dia: e.target.value })}
+              />
+            </label>
             {dias.length > 1 && (
               <button
-                className={btnDanger}
+                className={btnDangerSolid}
                 type="button"
                 onClick={() => setDias((actual) => actual.filter((item) => item.key !== dia.key))}
               >
+                <Trash className={iconClass} />
                 Quitar día
               </button>
             )}
@@ -237,25 +244,20 @@ export default function RutinaForm({
             </fieldset>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <select
-                className={inputClass}
+              <Select
+                className="sm:w-4/5"
+                searchable
                 value={ejercicioPendiente[dia.key] ?? primerEjercicioId}
-                onChange={(e) =>
-                  setEjercicioPendiente((actual) => ({
-                    ...actual,
-                    [dia.key]: Number(e.target.value),
-                  }))
+                onChange={(idEjercicio) =>
+                  setEjercicioPendiente((actual) => ({ ...actual, [dia.key]: idEjercicio }))
                 }
+                options={opcionesEjercicios}
+                placeholder="Buscar ejercicio"
+                aria-label="Ejercicio a agregar"
                 disabled={ejerciciosCatalogo.length === 0}
-              >
-                {ejerciciosCatalogo.map((ejercicio) => (
-                  <option key={ejercicio.id_ejercicio} value={ejercicio.id_ejercicio}>
-                    {ejercicio.nombre_ejercicio}
-                  </option>
-                ))}
-              </select>
+              />
               <button
-                className={btnSecondary}
+                className={`${btnPrimary} shrink-0 whitespace-nowrap sm:flex-1`}
                 type="button"
                 disabled={ejerciciosCatalogo.length === 0}
                 onClick={() => {
@@ -266,6 +268,7 @@ export default function RutinaForm({
                   });
                 }}
               >
+                <SquarePlus className={iconClass} />
                 Agregar ejercicio
               </button>
             </div>
@@ -280,40 +283,39 @@ export default function RutinaForm({
 
             {dia.ejercicios.map((ejercicio) => (
               <div key={ejercicio.key} className="grid grid-cols-1 gap-3 rounded-lg border border-line p-3 sm:grid-cols-2 xl:grid-cols-6">
-                <label className="sm:col-span-2">
+                <div className="sm:col-span-2">
                   <span className={labelClass}>Ejercicio</span>
-                  <select
-                    className={inputClass}
+                  <Select
+                    searchable
                     value={ejercicio.id_ejercicio}
-                    onChange={(e) =>
-                      updateEjercicio(dia.key, ejercicio.key, { id_ejercicio: Number(e.target.value) })
+                    onChange={(idEjercicio) =>
+                      updateEjercicio(dia.key, ejercicio.key, { id_ejercicio: idEjercicio })
                     }
-                  >
-                    {ejerciciosCatalogo.map((item) => (
-                      <option key={item.id_ejercicio} value={item.id_ejercicio}>
-                        {item.nombre_ejercicio}
-                      </option>
-                    ))}
-                    {!catalogoPorId.has(ejercicio.id_ejercicio) && ejercicio.id_ejercicio > 0 && (
-                      <option value={ejercicio.id_ejercicio}>Ejercicio #{ejercicio.id_ejercicio}</option>
-                    )}
-                  </select>
-                </label>
-                <label>
+                    options={
+                      !catalogoPorId.has(ejercicio.id_ejercicio) && ejercicio.id_ejercicio > 0
+                        ? [
+                            ...opcionesEjercicios,
+                            {
+                              value: ejercicio.id_ejercicio,
+                              label: `Ejercicio #${ejercicio.id_ejercicio}`,
+                            },
+                          ]
+                        : opcionesEjercicios
+                    }
+                    aria-label="Ejercicio"
+                  />
+                </div>
+                <div>
                   <span className={labelClass}>Sección</span>
-                  <select
-                    className={inputClass}
+                  <Select
                     value={ejercicio.tipo_seccion}
-                    onChange={(e) =>
-                      updateEjercicio(dia.key, ejercicio.key, {
-                        tipo_seccion: e.target.value as TipoSeccion,
-                      })
+                    onChange={(tipoSeccion) =>
+                      updateEjercicio(dia.key, ejercicio.key, { tipo_seccion: tipoSeccion })
                     }
-                  >
-                    <option value="calentamiento">Calentamiento</option>
-                    <option value="principal">Principal</option>
-                  </select>
-                </label>
+                    options={opcionesSeccion}
+                    aria-label="Sección"
+                  />
+                </div>
                 <label>
                   <span className={labelClass}>Series</span>
                   <input
@@ -335,7 +337,7 @@ export default function RutinaForm({
                   />
                 </label>
                 <label>
-                  <span className={labelClass}>Duración</span>
+                  <span className={labelClass}>Duración (seg)</span>
                   <input
                     className={inputClass}
                     inputMode="numeric"
@@ -368,7 +370,8 @@ export default function RutinaForm({
                       })
                     }
                   >
-                    Quitar
+                    <Trash className={iconClass} />
+                    Quitar ejercicio
                   </button>
                 </div>
               </div>
@@ -387,20 +390,23 @@ export default function RutinaForm({
       ))}
 
       <button
-        className={btnSecondary}
+        className={`${btnPrimary} w-full`}
         type="button"
         onClick={() => setDias((actual) => [...actual, emptyDia(actual.length + 1)])}
       >
+        <SquarePlus className={iconClass} />
         Agregar día
       </button>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap justify-end gap-3">
         <button className={btnPrimary} type="submit" disabled={guardando}>
+          <Save className={iconClass} />
           {guardando ? 'Guardando...' : 'Guardar rutina'}
         </button>
         <Link className={btnSecondary} to={cancelTo}>
+          <X className={iconClass} />
           Cancelar
         </Link>
       </div>

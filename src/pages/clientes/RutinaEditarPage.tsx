@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { listEjerciciosCatalogo, listGruposMusculares } from '../../api/catalogo';
 import { getCliente } from '../../api/clientes';
 import { getErrorMessage } from '../../api/errors';
-import { getRutina, saveRutina } from '../../api/rutinas';
+import { getRutinaCliente, saveRutina } from '../../api/rutinas';
 import RutinaForm from '../../components/rutinas/RutinaForm';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
@@ -12,25 +12,20 @@ import { clienteNombreCompleto } from '../../lib/format';
 import type { Cliente, EjercicioCatalogo, GrupoMuscular, Rutina } from '../../types';
 
 export default function RutinaEditarPage() {
-  const { id, rutinaId } = useParams();
+  const { id } = useParams();
   const idCliente = Number(id);
-  const idRutina = Number(rutinaId);
-  const idsValidos =
-    Number.isInteger(idCliente) &&
-    idCliente > 0 &&
-    Number.isInteger(idRutina) &&
-    idRutina > 0;
+  const idValido = Number.isInteger(idCliente) && idCliente > 0;
   const navigate = useNavigate();
 
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [rutina, setRutina] = useState<Rutina | null>(null);
   const [grupos, setGrupos] = useState<GrupoMuscular[]>([]);
   const [ejercicios, setEjercicios] = useState<EjercicioCatalogo[]>([]);
-  const [cargando, setCargando] = useState(idsValidos);
-  const [error, setError] = useState<string | null>(idsValidos ? null : 'Ruta inválida.');
+  const [cargando, setCargando] = useState(idValido);
+  const [error, setError] = useState<string | null>(idValido ? null : 'Cliente inválido.');
 
   useEffect(() => {
-    if (!idsValidos) return;
+    if (!idValido) return;
     let cancelled = false;
 
     const cargar = async () => {
@@ -38,7 +33,7 @@ export default function RutinaEditarPage() {
         setCargando(true);
         const [clienteData, rutinaData, gruposData, ejerciciosData] = await Promise.all([
           getCliente(idCliente),
-          getRutina(idRutina),
+          getRutinaCliente(idCliente),
           listGruposMusculares(),
           listEjerciciosCatalogo(),
         ]);
@@ -59,15 +54,15 @@ export default function RutinaEditarPage() {
     return () => {
       cancelled = true;
     };
-  }, [idCliente, idRutina, idsValidos]);
+  }, [idCliente, idValido]);
 
   if (cargando) return <LoadingState message="Cargando rutina..." />;
   if (error) return <ErrorState message={error} />;
-  if (!cliente || !rutina || rutina.id_cliente !== idCliente) {
+  if (!cliente || !rutina) {
     return (
       <EmptyState
         title="Rutina no encontrada"
-        message="No pudimos encontrar esa rutina para este cliente."
+        message="Este cliente no tiene una rutina para editar."
       />
     );
   }
@@ -75,7 +70,7 @@ export default function RutinaEditarPage() {
   return (
     <section>
       <Link
-        to={`/clientes/${cliente.id_cliente}/rutinas/${rutina.id_rutina}`}
+        to={`/clientes/${cliente.id_cliente}`}
         className="mb-4 inline-block text-sm text-muted no-underline hover:text-neon"
       >
         ← Volver a {clienteNombreCompleto(cliente.nombre, cliente.apellido)}
@@ -86,10 +81,10 @@ export default function RutinaEditarPage() {
         rutina={rutina}
         grupos={grupos}
         ejerciciosCatalogo={ejercicios}
-        cancelTo={`/clientes/${cliente.id_cliente}/rutinas/${rutina.id_rutina}`}
+        cancelTo={`/clientes/${cliente.id_cliente}`}
         onSubmit={async (draft) => {
           await saveRutina(rutina.id_rutina, draft);
-          navigate(`/clientes/${cliente.id_cliente}/rutinas/${rutina.id_rutina}`);
+          navigate(`/clientes/${cliente.id_cliente}`);
         }}
       />
     </section>

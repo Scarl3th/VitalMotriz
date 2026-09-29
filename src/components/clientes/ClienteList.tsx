@@ -14,13 +14,13 @@ export default function ClienteList({ clientes }: ClienteListProps) {
       <table className="w-full min-w-[36rem] border-collapse text-left">
         <thead>
           <tr>
-            <th className="border-b border-line bg-thead px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted">
+            <th className="border-b border-line bg-thead px-4 py-3 text-[13px] font-bold uppercase tracking-wider text-neon">
               Nombre
             </th>
-            <th className="border-b border-line bg-thead px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted">
+            <th className="border-b border-line bg-thead px-4 py-3 text-[13px] font-bold uppercase tracking-wider text-neon">
               Teléfono
             </th>
-            <th className="border-b border-line bg-thead px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted">
+            <th className="border-b border-line bg-thead px-4 py-3 text-[13px] font-bold uppercase tracking-wider text-neon">
               Fecha de registro
             </th>
           </tr>

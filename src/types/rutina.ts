@@ -1,4 +1,3 @@
-export type EstadoRutina = 'activa' | 'completada' | 'inactiva';
 export type TipoSeccion = 'calentamiento' | 'principal';
 
 export interface GrupoMuscular {
@@ -32,16 +31,12 @@ export interface DiaRutina {
   ejercicios_rutina: EjercicioRutina[];
 }
 
-export interface RutinaResumen {
+export interface Rutina {
   id_rutina: number;
   id_cliente: number;
   nombre_rutina: string | null;
   fecha_inicio: string | null;
   fecha_fin: string | null;
-  estado: EstadoRutina;
-}
-
-export interface Rutina extends RutinaResumen {
   dias_rutina: DiaRutina[];
 }
 
@@ -72,6 +67,5 @@ export interface RutinaDraft {
   nombre_rutina: string | null;
   fecha_inicio: string | null;
   fecha_fin: string | null;
-  estado: EstadoRutina;
   dias: RutinaDraftDia[];
 }

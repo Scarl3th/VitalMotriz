@@ -5,7 +5,7 @@
   --color-surface: #161616;
   --color-surface-hover: #1f1f1f;
   --color-thead: #141414;
-  --color-line: #262626;
+  --color-line: #6b6b6b;
   --color-ink: #f2f2f2;
   --color-muted: #8a8a8a;
   --color-heading: #f2f2f2;
@@ -19,8 +19,19 @@
   --color-danger: #ff4d4d;
   --color-danger-dim: rgba(255, 77, 77, 0.12);
   --color-danger-border: rgba(255, 77, 77, 0.35);
+  --color-danger-solid: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
   --color-notes: #1c1c1c;
-  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Barlow Semi Condensed', 'Inter Variable', system-ui, sans-serif;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  th {
+    font-family: var(--font-display);
+  }
 }
 
 html,
@@ -31,6 +42,8 @@ body,
 
 html {
   overflow-x: clip;
+  color-scheme: dark;
+  accent-color: var(--color-neon);
 }
 
 body {
